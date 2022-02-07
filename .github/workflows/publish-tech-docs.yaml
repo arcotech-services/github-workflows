@@ -1,8 +1,32 @@
 name: Publish TechDocs Site
 
-on:
-  push:
-    branches: [main]
+on:  
+  workflow_call:
+    inputs:
+      TECHDOCS_S3_BUCKET_NAME:
+        required: true
+        type: string
+      AWS_ACCESS_KEY_ID:
+        required: true
+        type: string
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+      ENTITY_NAMESPACE:
+        required: true
+        type: string
+      ENTITY_KIND:
+        required: true
+        type: string
+      ENTITY_NAME:
+        required: true
+        type: string
+    secrets:
+      envPAT:
+        required: true
 
 env:
      TECHDOCS_S3_BUCKET_NAME: ${{ inputs.TECHDOCS_S3_BUCKET_NAME }}
