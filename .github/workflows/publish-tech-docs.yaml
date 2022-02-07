@@ -3,15 +3,6 @@ name: Publish TechDocs Site
 on:  
   workflow_call:
     inputs:
-      TECHDOCS_S3_BUCKET_NAME:
-        required: true
-        type: string
-      AWS_ACCESS_KEY_ID:
-        required: true
-        type: string
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-        type: string
       AWS_REGION:
         required: true
         type: string
@@ -27,11 +18,17 @@ on:
     secrets:
       envPAT:
         required: true
+      TECHDOCS_S3_BUCKET_NAME:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
 
 env:
-     TECHDOCS_S3_BUCKET_NAME: ${{ inputs.TECHDOCS_S3_BUCKET_NAME }}
-     AWS_ACCESS_KEY_ID: ${{ inputs.TECHDOCS_AWS_ACCESS_KEY_ID }}
-     AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+     TECHDOCS_S3_BUCKET_NAME: ${{ secrets.TECHDOCS_S3_BUCKET_NAME }}
+     AWS_ACCESS_KEY_ID: ${{ secrets.TECHDOCS_AWS_ACCESS_KEY_ID }}
+     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
      AWS_REGION: ${{ inputs.AWS_REGION }}
      ENTITY_NAMESPACE: ${{ inputs.ENTITY_NAMESPACE }}
      ENTITY_KIND: ${{ inputs.ENTITY_KIND }}
