@@ -4,31 +4,26 @@ on:
   push:
     branches: [main]
 
+env:
+     TECHDOCS_S3_BUCKET_NAME: ${{ inputs.TECHDOCS_S3_BUCKET_NAME }}
+     AWS_ACCESS_KEY_ID: ${{ inputs.TECHDOCS_AWS_ACCESS_KEY_ID }}
+     AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+     AWS_REGION: ${{ inputs.AWS_REGION }}
+     ENTITY_NAMESPACE: ${{ inputs.ENTITY_NAMESPACE }}
+     ENTITY_KIND: ${{ inputs.ENTITY_KIND }}
+     ENTITY_NAME: ${{ inputs.ENTITY_NAME }}
+     # In a Software template, Scaffolder will replace {{cookiecutter.component_id | jsonify}}
+     # with the correct entity name. This is same as metadata.name in the entity's catalog-info.yaml
+     # ENTITY_NAME: '{{ cookiecutter.component_id | jsonify }}'
+
 jobs:
   publish-techdocs-site:
     runs-on: ubuntu-latest
-
-    # The following secrets are required in your CI environment for publishing files to AWS S3.
-    # e.g. You can use GitHub Organization secrets to set them for all existing and new repositories.
-    env:
-      TECHDOCS_S3_BUCKET_NAME: ${{ inputs.TECHDOCS_S3_BUCKET_NAME }}
-      AWS_ACCESS_KEY_ID: ${{ inputs.TECHDOCS_AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: ${{ inputs.AWS_REGION }}
-      ENTITY_NAMESPACE: ${{ inputs.ENTITY_NAMESPACE }}
-      ENTITY_KIND: ${{ inputs.ENTITY_KIND }}
-      ENTITY_NAME: ${{ inputs.ENTITY_NAME }}
-      # In a Software template, Scaffolder will replace {{cookiecutter.component_id | jsonify}}
-      # with the correct entity name. This is same as metadata.name in the entity's catalog-info.yaml
-      # ENTITY_NAME: '{{ cookiecutter.component_id | jsonify }}'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - uses: actions/setup-node@v2
       - uses: actions/setup-python@v2
-
       # the 2 steps below can be removed if you aren't using plantuml in your documentation
       - name: setup java
         uses: actions/setup-java@v2
@@ -47,12 +42,9 @@ jobs:
           sudo apt-get install -y graphviz
       - name: Install techdocs-cli
         run: sudo npm install -g @techdocs/cli
-
       - name: Install mkdocs and mkdocs plugins
         run: python -m pip install mkdocs-techdocs-core==0.*
-
       - name: Generate docs site
         run: techdocs-cli generate --no-docker --verbose
-
       - name: Publish docs site
         run: techdocs-cli publish --publisher-type awsS3 --storage-name $TECHDOCS_S3_BUCKET_NAME --entity $ENTITY_NAMESPACE/$ENTITY_KIND/$ENTITY_NAME
