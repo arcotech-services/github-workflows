@@ -7,21 +7,19 @@ on:
         required: true
         type: string
         default: ghcr.io
-      USERNAME:
+    secrets:
+      GH_REGISTRY_USERNAME:
         required: true
-        type: string
-      PASSWORD:
+      GH_REGISTRY_PASSWORD:
         required: true
-        type: string
 env:
   REGISTRY: ${{ inputs.REGISTRY }}
-  USERNAME: ${{ secrets.GH_REGISTRY_USERNAME }}
-  PASSWORD: ${{ secrets.GH_REGISTRY_USERNAME }}
+  GH_REGISTRY_USERNAME: ${{ secrets.GH_REGISTRY_USERNAME }}
+  GH_REGISTRY_PASSWORD: ${{ secrets.GH_REGISTRY_PASSWORD }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    needs: kubeval
     steps:
       - name: Get Short SHA
         id: sha
@@ -32,12 +30,13 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: ${{ env.USERNAME }}
-          password: ${{ env.PASSWORD }}
+          username: ${{ env.GH_REGISTRY_USERNAME }}
+          password: ${{ env.GH_REGISTRY_PASSWORD }}
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v2
         with:
           context: .
+          push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}
             ghcr.io/${{ github.repository }}:latest
