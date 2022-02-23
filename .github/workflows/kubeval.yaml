@@ -1,0 +1,35 @@
+---
+name: kubeval
+on:
+  workflow_call:
+    inputs:
+      MANIFESTS_PATH:
+        required: true
+        type: string
+        default: .k8s
+jobs:
+  kubeval:
+    name: kubeval
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "SH8=$(echo ${{ env.SH8 }})" >> $GITHUB_ENV
+        name: Get short commit
+      - name: Check out code
+        uses: actions/checkout@v2
+      - uses: azure/setup-kubectl@v1
+        id: install
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          kustomize-version: "3.8.8"
+      - name: Setup Kubeval
+        uses: lra/setup-kubeval@v1
+      - run: |
+          export GREEN='\033[0;32m'
+          export NOCOLOR='\033[0m'
+          for env in `find ${{ inputs.MANIFESTS_PATH }}/ -type d|awk 'NR > 1'`; do
+            echo -e "\n\n${GREEN}Validating $env manifests${NOCOLOR}"
+            kustomize build $env|kubeval --skip-kinds "SealedSecret,ExternalSecret,RabbitmqCluster,EndpointMonitor,AlertmanagerConfig,ScaledObject,TriggerAuthentication,PrometheusRule"
+          done
+        name: kubeval
