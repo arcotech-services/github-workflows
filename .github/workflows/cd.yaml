@@ -23,6 +23,9 @@ on:
 env:
   APP_NAME: ${{ github.repository }}
   ALERTS_CHANNEL: "${{ secrets.SAE_ALERTS_CHANNEL }}"
+  ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
+  ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
+  ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
 
 jobs:
   sync-stg:
