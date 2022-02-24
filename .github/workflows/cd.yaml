@@ -15,7 +15,7 @@ on:
 
 env:
   APP_NAME: ${{ github.repository }}
-  ALERTS_CHANNEL: "${{ secrets.ALERTS_CHANNEL }}"
+  ALERTS_CHANNEL: ""
 
 jobs:
   sync-stg:
