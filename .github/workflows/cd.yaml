@@ -30,7 +30,6 @@ env:
 jobs:
   sync-stg:
     runs-on: self-hosted
-    needs: set-repo-name
     environment: staging
     steps:
 
