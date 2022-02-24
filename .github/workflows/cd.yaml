@@ -14,6 +14,7 @@ on:
         type: string
 env:
   APP_NAME: ${{ github.repository }}
+  ALERTS_CHANNEL: "${{ inputs.ALERTS_CHANNEL }}"
 
 jobs:
   sync-stg:
@@ -49,7 +50,7 @@ jobs:
         with:
           status: ${{ job.status }}
           steps: ${{ toJson(steps) }}
-          channel: "${{ inputs.ALERTS_CHANNEL }}"
+          channel: "${{ env.ALERTS_CHANNEL }}"
 
   sync-prd:
     runs-on: self-hosted
