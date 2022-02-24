@@ -12,6 +12,13 @@ on:
     secrets:
       ALERTS_CHANNEL:
         required: true
+      ARGOCD_URL:
+        required: true
+      ARGOCD_USER:
+        required: true
+      ARGOCD_PASS:
+        required: true
+
 
 env:
   APP_NAME: ${{ github.repository }}
