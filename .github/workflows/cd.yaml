@@ -9,13 +9,13 @@ on:
       APP_NAME:
         required: false
         type: string
+    secrets:
       ALERTS_CHANNEL:
         required: true
-        type: string
 
 env:
   APP_NAME: ${{ github.repository }}
-  ALERTS_CHANNEL: ""
+  ALERTS_CHANNEL: "${{ secrets.SAE_ALERTS_CHANNEL }}"
 
 jobs:
   sync-stg:
