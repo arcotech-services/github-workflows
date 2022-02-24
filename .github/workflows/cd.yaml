@@ -6,12 +6,11 @@ name: CD
 on:
   workflow_call:
     inputs:
-      MANIFESTS_PATH:
-        required: true
-        type: string
-        default: .k8s
       APP_NAME:
         required: false
+        type: string
+      ALERTS_CHANNEL:
+        required: true
         type: string
 env:
   APP_NAME: ${{ github.repository }}
@@ -44,6 +43,14 @@ jobs:
         with:
           command: app sync ${{ env.APP_NAME }}-stg
 
+      - name: Deploy ${{ env.APP_NAME }} stg version ${{ steps.sha.outputs.sha8 }} by user ${{ github.actor }}
+        if: always()
+        uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: "${{ inputs.ALERTS_CHANNEL }}"
+
   sync-prd:
     runs-on: self-hosted
     needs: sync-stg
@@ -71,3 +78,11 @@ jobs:
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: app sync ${{ env.APP_NAME }}-prd
+
+      - name: Deploy ${{ env.APP_NAME }} prd version ${{ steps.sha.outputs.sha8 }} by user ${{ github.actor }}
+        if: always()
+        uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: "${{ inputs.ALERTS_CHANNEL }}"
