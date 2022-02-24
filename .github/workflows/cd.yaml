@@ -28,13 +28,6 @@ env:
 
 
 jobs:
-  set-repo-name:
-    runs-on: self-hosted
-    steps:
-      - name: Set Repo Name
-        run: echo ::set-env name=APP_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//") >> $GITHUB_ENV
-        shell: bash
-
   sync-stg:
     runs-on: self-hosted
     needs: set-repo-name
