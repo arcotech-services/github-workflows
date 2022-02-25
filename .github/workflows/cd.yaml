@@ -48,13 +48,13 @@ jobs:
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: proj create
-          options: -f .argocd/project-stg.yaml
+          options: -f .argocd/project-stg.yaml --upsert
 
       - name: Add application to ArgoCD
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: app create
-          options: -f .argocd/app-stg.yaml
+          options: -f .argocd/app-stg.yaml --upsert
 
       - name: Get Short SHA
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -71,7 +71,7 @@ jobs:
       - name: Sync Staging
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app sync "${{ env.APP_NAME }}-stg"
+          command: app sync "${{ env.APP_NAME }}-stg" 
 
   sync-prd:
     runs-on: self-hosted
@@ -94,13 +94,13 @@ jobs:
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: proj create
-          options: -f .argocd/project-prd.yaml
+          options: -f .argocd/project-prd.yaml --upsert
 
       - name: Add application to ArgoCD
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: app create
-          options: -f .argocd/app-prd.yaml
+          options: -f .argocd/app-prd.yaml --upsert
 
       - name: Get Short SHA
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
