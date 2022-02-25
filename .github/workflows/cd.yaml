@@ -65,7 +65,7 @@ jobs:
         with:
           status: ${{ job.status }}
           steps: ${{ toJson(steps) }}
-          channel: $ALERTS_CHANNEL
+          channel: ${{ env.ALERTS_CHANNEL }}
 
   sync-prd:
     runs-on: self-hosted
