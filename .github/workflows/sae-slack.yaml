@@ -1,0 +1,20 @@
+---
+name: Sae Slack Notification
+on: 
+  workflow_dispatch:
+
+env:
+  SAE_ALERTS_CHANNEL: ${{ secrets.SAE_ALERTS_CHANNEL }}
+
+jobs:
+  slackNotification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy ${{ env.APP_NAME }} stg version ${{ steps.sha.outputs.sha8 }} by user ${{ github.actor }}
+        if: always()
+        uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: "${{ env.SAE_ALERTS_CHANNEL }}"
