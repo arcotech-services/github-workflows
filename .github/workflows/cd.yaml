@@ -32,15 +32,26 @@ jobs:
     runs-on: self-hosted
     environment: staging
     steps:
-
-      - run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
-        shell: bash
-
       - name: Login to ArgoCD
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: login "${{ secrets.ARGOCD_URL }}"
           options: --grpc-web --username "${{ secrets.ARGOCD_USER }}" --password "${{ secrets.ARGOCD_PASS }}"
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Add project to ArgoCD
+        uses: clowdhaus/argo-cd-action/@main
+        with:
+          command: proj create
+          options: -f .argocd/project-stg.yaml
+
+      - name: Add application to ArgoCD
+        uses: clowdhaus/argo-cd-action/@main
+        with:
+          command: app create
+          options: -f .argocd/app-stg.yaml
 
       - name: Get Short SHA
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -51,36 +62,39 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app set "${{ env.APP_NAME }}-stg"
+          command: app set coc-amigos-do-coc-stg
           options: --kustomize-image "ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}"
 
       - name: Sync Staging
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app sync "${{ env.APP_NAME }}-stg"
-
-      - name: Deploy ${{ env.APP_NAME }} stg version ${{ steps.sha.outputs.sha8 }} by user ${{ github.actor }}
-        if: always()
-        uses: act10ns/slack@v1
-        with:
-          status: ${{ job.status }}
-          steps: ${{ toJson(steps) }}
-          channel: ${{ env.ALERTS_CHANNEL }}
+          command: app sync coc-amigos-do-coc-stg
 
   sync-prd:
     runs-on: self-hosted
     needs: sync-stg
     environment: production
     steps:
-    
-      - run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
-        shell: bash
-        
       - name: Login to ArgoCD
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: login "${{ secrets.ARGOCD_URL }}"
           options: --grpc-web --username "${{ secrets.ARGOCD_USER }}" --password "${{ secrets.ARGOCD_PASS }}"
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Add project to ArgoCD
+        uses: clowdhaus/argo-cd-action/@main
+        with:
+          command: proj create
+          options: -f .argocd/project-prd.yaml
+
+      - name: Add application to ArgoCD
+        uses: clowdhaus/argo-cd-action/@main
+        with:
+          command: app create
+          options: -f .argocd/app-prd.yaml
 
       - name: Get Short SHA
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -91,13 +105,13 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app set ${{ env.APP_NAME }}-prd
+          command: app set coc-amigos-do-coc-prd
           options: --kustomize-image "ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}"
 
       - name: Sync Production
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app sync ${{ env.APP_NAME }}-prd
+          command: app sync coc-amigos-do-coc-prd
 
       - name: Deploy ${{ env.APP_NAME }} prd version ${{ steps.sha.outputs.sha8 }} by user ${{ github.actor }}
         if: always()
