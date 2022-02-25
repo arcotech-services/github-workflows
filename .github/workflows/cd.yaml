@@ -65,7 +65,7 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app set "${{ env.APP_NAME }}-stg"
+          command: app set --revision ${{ steps.sha.outputs.sha8 }} "${{ env.APP_NAME }}-stg"
           options: --kustomize-image "ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}"
 
       - name: Sync Staging
@@ -111,7 +111,7 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app set "${{ env.APP_NAME }}-prd"
+          command: app set ${{ steps.sha.outputs.sha8 }} "${{ env.APP_NAME }}-prd"
           options: --kustomize-image "ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}"
 
       - name: Sync Production
