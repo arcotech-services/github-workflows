@@ -2,6 +2,9 @@
 name: Sae Slack Notification
 on: 
   workflow_call:
+    secrets:
+      SAE_ALERTS_CHANNEL:
+        required: true
 
 env:
   SAE_ALERTS_CHANNEL: ${{ secrets.SAE_ALERTS_CHANNEL }}
