@@ -5,9 +5,12 @@ on:
     secrets:
       SAE_ALERTS_CHANNEL:
         required: true
+      SLACK_WEBHOOK_URL:
+        required: true
 
 env:
   SAE_ALERTS_CHANNEL: ${{ secrets.SAE_ALERTS_CHANNEL }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
 jobs:
   slackNotification:
