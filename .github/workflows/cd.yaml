@@ -72,6 +72,10 @@ jobs:
     needs: sync-stg
     environment: production
     steps:
+    
+      - run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+        shell: bash
+        
       - name: Login to ArgoCD
         uses: clowdhaus/argo-cd-action/@main
         with:
