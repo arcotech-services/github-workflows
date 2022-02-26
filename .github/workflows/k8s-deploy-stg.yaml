@@ -21,7 +21,7 @@ on:
 
 
 env:
-  ALERTS_CHANNEL: "${{ secrets.SAE_ALERTS_CHANNEL }}"
+  ALERTS_CHANNEL: "${{ secrets.ALERTS_CHANNEL }}"
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
   ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
