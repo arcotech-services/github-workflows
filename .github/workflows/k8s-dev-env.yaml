@@ -2,7 +2,7 @@
 name: 📦🚀 Create Dev Environment
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       DEV-ENV-NAME:
         description: Dev Environment Name
