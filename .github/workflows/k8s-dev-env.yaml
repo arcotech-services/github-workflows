@@ -1,0 +1,143 @@
+---
+name: 📦🚀 Create Dev Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      DEV-ENV-NAME:
+        description: Dev Environment Name
+        required: true
+        type: string
+      MANIFESTS_PATH:
+        required: true
+        type: string
+        default: .k8s/overlays/dev/
+      DOMAIN:
+        required: true
+        type: string
+      TASK:
+        description: Task name or task url
+
+env:
+  DOCKER_IMAGE: "ghcr.io/${{ github.repository }}"
+  SH8: $(echo ${GITHUB_SHA} | cut -c1-8)
+  STACK_NAME: "dev-${{ github.event.inputs.DEV-ENV-NAME }}"
+  DEV_STACK_TTL: 1d
+
+concurrency:
+  group: dev-${{ github.event.inputs.DEV-ENV-NAME }}
+  cancel-in-progress: true
+
+jobs:
+  validate-stack-name:
+    name: validate-stack-name
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get short commit and stack name
+        run: |
+          echo "SH8=$(echo ${{ env.SH8 }})" >> $GITHUB_ENV
+          echo "STACK_NAME=$(echo ${{ env.STACK_NAME }}| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Verify stack name
+        run: |
+          if [[ $STACK_NAME == *['!'@#\$%^\&*()_+]* ]] || [[ $STACK_NAME == *"$APP_NAME"* ]] || [[ $STACK_NAME == *"$PROJECT_NAME"* ]] || [[ $STACK_NAME == *[A-Z]* ]] || [[ $STACK_NAME == *" "* ]]
+          then
+            echo "Stack name contains invalid characters"
+            echo "Only allowed Alpha numeric lowercase and hyphen, app-name or project is not allowed"
+            exit 1
+          fi
+
+  kubeval:
+    uses: arcotech-services/github-workflows/.github/workflows/kubeval.yaml@main
+    with:
+      MANIFESTS_PATH: ${{ inputs.MANIFESTS_PATH }}
+
+  build:
+    needs: kubeval
+    uses: arcotech-services/github-workflows/.github/workflows/docker-build.yaml@main
+    with:
+      REGISTRY: ghcr.io
+    secrets:
+      GH_REGISTRY_USERNAME: ${{ secrets.GH_REGISTRY_USERNAME }}
+      GH_REGISTRY_PASSWORD: ${{ secrets.GH_REGISTRY_PASSWORD }}
+
+  deploy-dev:
+    env:
+      STAGE: dev
+    environment:
+      name: dev
+      url: https://${{ env.APP_NAME }}-${{ env.STACK_NAME }}.${{ inputs.DOMAIN }}
+    name: deploy-dev
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - run: |
+          echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+          echo "SH8=$(echo ${{ env.SH8 }})" >> $GITHUB_ENV
+          echo "STACK_NAME=$(echo ${{ env.STACK_NAME }}| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "DEV_STACK_TTL=$(echo ${{ env.DEV_STACK_TTL }})" >> $GITHUB_ENV
+        name: Get short commit
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - uses: azure/setup-kubectl@v1
+        id: install
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          kustomize-version: 3.8.8
+
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}  # Use secret (https://developer.github.com/actions/managing-workflows/storing-secrets/)
+          context: stg01-us-east-1.k8s.local  # If left unspecified, current-context from kubeconfig is used as default
+        id: set-staging-context
+
+      - uses: actions/setup-python@v2
+      - uses: BSFishy/pip-action@v1
+        with:
+          packages: |
+            kubesplit
+      - name: Setup yq
+        uses: chrisdickinson/setup-yq@latest
+
+      - name: Deploy Dev Stack
+        run: |
+          # Dev Stack deploy
+
+           if [[ ! $STACK_NAME ]]; then
+             echo "STACK NAME is not defined"
+             exit 1
+           else
+             echo "STACK_NAME is $STACK_NAME"
+           fi
+             kubectl create namespace $STACK_NAME || true
+             kubectl label ns $STACK_NAME stack-type=dev --overwrite
+             kubectl label ns $STACK_NAME janitor/ttl=$DEV_STACK_TTL --overwrite
+             kubectl label ns $STACK_NAME developer=${{ github.actor }} --overwrite
+             kubectl config set-context --current --namespace=$STACK_NAME
+             cd .k8s/overlays/dev/
+             set -x
+             kustomize build|sed "s/STACK_NAME/$STACK_NAME/g"|sed "s/DOCKER_TAG/$SH8/g"|kubectl apply -f -
+             set +x
+           if [ "$?" -ne "0" ];then
+             echo Stack build failed!
+             exit 1
+           else
+             kustomize build|sed "s/STACK_NAME/$STACK_NAME/g"|kubesplit -o .
+             for yaml in `ls $STACK_NAME`; do
+               if head -8 $STACK_NAME/$yaml|grep -q "kind: Deployment"; then
+                 printf "${NC}"
+                 MANIFEST_APP_NAME=$(yq r $STACK_NAME/$yaml metadata.name)
+                 kubectl rollout status deployment $MANIFEST_APP_NAME || exit 1
+                 printf "\n\n${GREEN}The $MANIFEST_APP_NAME deployed successfully on $STACK_NAME environment\n\n${YELLOW}"
+               fi
+             done
+             echo "Removing temp files!"
+             rm -rf $STACK_NAME||exit 1
+             printf "\n\n${RED}Your MY-STACK TTL is $DEV_STACK_TTL\n"
+             echo Stack build success!
+             echo "Stack URL: https://`kubectl get ingress|grep $APP_NAME|awk '{print $3}'`"
+           fi
