@@ -17,13 +17,18 @@ on:
         type: string
       TASK:
         description: Task name or task url
+        required: false
+        type: string
+    secrets:
+      KUBE_CONFIG_STAGING:
+        required: true
 
 env:
   DOCKER_IMAGE: "ghcr.io/${{ github.repository }}"
   SH8: $(echo ${GITHUB_SHA} | cut -c1-8)
+  DEV_STACK_TTL: "1d"
+  PROJECT_NAME: studos
   STACK_NAME: "dev-${{ github.event.inputs.DEV-ENV-NAME }}"
-  DEV_STACK_TTL: 1d
-
 concurrency:
   group: dev-${{ github.event.inputs.DEV-ENV-NAME }}
   cancel-in-progress: true
@@ -31,18 +36,21 @@ concurrency:
 jobs:
   validate-stack-name:
     name: validate-stack-name
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Get short commit and stack name
         run: |
           echo "SH8=$(echo ${{ env.SH8 }})" >> $GITHUB_ENV
           echo "STACK_NAME=$(echo ${{ env.STACK_NAME }}| tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+
       - name: Verify stack name
         run: |
           if [[ $STACK_NAME == *['!'@#\$%^\&*()_+]* ]] || [[ $STACK_NAME == *"$APP_NAME"* ]] || [[ $STACK_NAME == *"$PROJECT_NAME"* ]] || [[ $STACK_NAME == *[A-Z]* ]] || [[ $STACK_NAME == *" "* ]]
           then
             echo "Stack name contains invalid characters"
             echo "Only allowed Alpha numeric lowercase and hyphen, app-name or project is not allowed"
+            echo "This stack name is: $STACK_NAME"
             exit 1
           fi
 
@@ -51,10 +59,10 @@ jobs:
       STAGE: dev
     environment:
       name: dev
-      url: https://${{ env.APP_NAME }}-${{ env.STACK_NAME }}.${{ inputs.DOMAIN }}
+      url: https://${{ env.APP_NAME }}-${{ env.STACK_NAME }}.${{ github.event.inputs.DOMAIN }}
     name: deploy-dev
     runs-on: self-hosted
-    needs: build
+    needs: validate-stack-name
     steps:
       - run: |
           echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
@@ -104,7 +112,7 @@ jobs:
              kubectl label ns $STACK_NAME janitor/ttl=$DEV_STACK_TTL --overwrite
              kubectl label ns $STACK_NAME developer=${{ github.actor }} --overwrite
              kubectl config set-context --current --namespace=$STACK_NAME
-             cd {{ inputs.MANIFESTS_PATH }}
+             cd ${{ github.event.inputs.MANIFESTS_PATH }}
              set -x
              kustomize build|sed "s/STACK_NAME/$STACK_NAME/g"|sed "s/DOCKER_TAG/$SH8/g"|kubectl apply -f -
              set +x
