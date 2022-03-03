@@ -46,20 +46,6 @@ jobs:
             exit 1
           fi
 
-  kubeval:
-    uses: arcotech-services/github-workflows/.github/workflows/kubeval.yaml@main
-    with:
-      MANIFESTS_PATH: ${{ inputs.MANIFESTS_PATH }}
-
-  build:
-    needs: kubeval
-    uses: arcotech-services/github-workflows/.github/workflows/docker-build.yaml@main
-    with:
-      REGISTRY: ghcr.io
-    secrets:
-      GH_REGISTRY_USERNAME: ${{ secrets.GH_REGISTRY_USERNAME }}
-      GH_REGISTRY_PASSWORD: ${{ secrets.GH_REGISTRY_PASSWORD }}
-
   deploy-dev:
     env:
       STAGE: dev
