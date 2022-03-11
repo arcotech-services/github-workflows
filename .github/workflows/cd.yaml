@@ -8,15 +8,7 @@ on:
     inputs:
       APP_NAME:
         required: false
-        type: boolean
-      ENABLE_STG:
-        default: true
-        required: false
-        type: boolean
-      ENABLE_PRD:
-        default: true
-        required: false
-        type: boolean
+        type: string
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -33,13 +25,19 @@ env:
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
   ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
-  ENABLE_STG: "${{ inputs.ENABLE_STG }}"
-  ENABLE_PRD: "${{ inputs.ENABLE_PRD }}"
+  #ENABLE_STG: ${{ inputs.ENABLE_STG }}
+  #ENABLE_PRD: ${{ inputs.ENABLE_PRD }}
 
 
 jobs:
+  printInputs:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Env: ${{ github.event.inputs.ENABLE_PRD }}"
+          echo "Env: ${{ github.event.inputs.ENABLE_STG }}"
   sync-stg:
-    if: ${{env.ENABLE_STG}} == "true"
+    if: ${{ github.event.inputs.ENABLE_STG == 'true' }}
     runs-on: self-hosted
     environment: staging
     steps:
@@ -82,23 +80,22 @@ jobs:
       - name: Sync Staging
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app sync "${{ env.APP_NAME }}-stg" 
+          command: app sync "${{ env.APP_NAME }}-stg"
 
   sync-prd:
-    if: ${{env.ENABLE_STG}} == "true"
+    if: ${{ github.event.inputs.ENABLE_PRD == 'true' }}
     runs-on: self-hosted
     needs: sync-stg
     environment: production
     steps:
       - name: Get app name
         run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
-     
+
       - name: Login to ArgoCD
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: login "${{ secrets.ARGOCD_URL }}"
-          options: --grpc-web --username "${{ secrets.ARGOCD_USER }}" --password "${{ secrets.ARGOCD_PASS }}"
-
+          options: --grpc-web --username "${{ secrets.ARGOCD_USER }}" --password "${{ secrets.ARGOCD_PASS }}
       - name: Check out code
         uses: actions/checkout@v2
 
