@@ -8,7 +8,15 @@ on:
     inputs:
       APP_NAME:
         required: false
-        type: string
+        type: boolean
+      ENABLE_STG:
+        default: true
+        required: false
+        type: boolean
+      ENABLE_PRD:
+        default: true
+        required: false
+        type: boolean
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -25,10 +33,13 @@ env:
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
   ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
+  ENABLE_STG: "${{ inputs.ENABLE_STG }}"
+  ENABLE_PRD: "${{ inputs.ENABLE_PRD }}"
 
 
 jobs:
   sync-stg:
+    if: ${{env.ENABLE_STG}} == "true"
     runs-on: self-hosted
     environment: staging
     steps:
@@ -74,6 +85,7 @@ jobs:
           command: app sync "${{ env.APP_NAME }}-stg" 
 
   sync-prd:
+    if: ${{env.ENABLE_STG}} == "true"
     runs-on: self-hosted
     needs: sync-stg
     environment: production
