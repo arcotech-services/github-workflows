@@ -9,6 +9,14 @@ on:
       APP_NAME:
         required: false
         type: string
+      ENABLE_STG:
+        required: false
+        type: string
+        default: 'true'
+      ENABLE_PRD:
+        required: false
+        type: string
+        default: 'true'
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -25,19 +33,10 @@ env:
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
   ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
-  #ENABLE_STG: ${{ inputs.ENABLE_STG }}
-  #ENABLE_PRD: ${{ inputs.ENABLE_PRD }}
-
 
 jobs:
-  printInputs:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "Env: ${{ github.event.inputs.ENABLE_PRD }}"
-          echo "Env: ${{ github.event.inputs.ENABLE_STG }}"
   sync-stg:
-    if: ${{ github.event.inputs.ENABLE_STG == 'true' }}
+    if: ${{ inputs.ENABLE_STG == 'true' }}
     runs-on: self-hosted
     environment: staging
     steps:
@@ -65,13 +64,13 @@ jobs:
           command: app create
           options: -f .argocd/app-stg.yaml --upsert
 
-      - name: Get Short SHA
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+      - if: ${{ github.event.workflow_run.conclusion == 'success'}}
+        name: Get Short SHA
         id: sha
         run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
 
-      - name: ArgoCD Overwrite Image Tag
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+      - if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        name: ArgoCD Overwrite Image Tag
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: app set --revision ${{ steps.sha.outputs.sha8 }} "${{ env.APP_NAME }}-stg"
@@ -83,9 +82,9 @@ jobs:
           command: app sync "${{ env.APP_NAME }}-stg"
 
   sync-prd:
-    if: ${{ github.event.inputs.ENABLE_PRD == 'true' }}
-    runs-on: self-hosted
+    if: ${{ !failure() && inputs.ENABLE_PRD == 'true' }}
     needs: sync-stg
+    runs-on: self-hosted
     environment: production
     steps:
       - name: Get app name
