@@ -10,13 +10,9 @@ on:
 jobs:
   kubeval:
     name: kubeval
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "SH8=$(echo ${{ env.SH8 }})" >> $GITHUB_ENV
-        name: Get short commit
-      
-      - name: Check out code
+      - name: Checkout Code
         uses: actions/checkout@v2
       
       - uses: azure/setup-kubectl@v1
@@ -27,8 +23,7 @@ jobs:
         with:
           kustomize-version: "3.8.8"
       
-      - name: Validate Manifests
-        uses: lra/setup-kubeval@v1
+      - name: Validate Manifests     
         run: |
           export GREEN='\033[0;32m'
           export NOCOLOR='\033[0m'
