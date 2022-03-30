@@ -12,13 +12,13 @@ jobs:
     name: kubeval
     runs-on: self-hosted
     steps:
-      - name: Get short commit
-        run: |
+      - run: |
           echo "SH8=$(echo ${{ env.SH8 }})" >> $GITHUB_ENV
-        
+        name: Get short commit
+      
       - name: Check out code
         uses: actions/checkout@v2
-
+      
       - uses: azure/setup-kubectl@v1
         id: install
       
