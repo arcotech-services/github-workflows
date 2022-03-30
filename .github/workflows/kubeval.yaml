@@ -30,6 +30,5 @@ jobs:
           export NOCOLOR='\033[0m'
           for env in `find ${{ inputs.MANIFESTS_PATH }}/ -type d|awk 'NR > 1'`; do
             echo -e "\n\n${GREEN}Validating $env manifests${NOCOLOR}"
-            kustomize build $env|kubeval --skip-kinds "Flow,ClusterFlow,SealedSecret,ExternalSecret,RabbitmqCluster,EndpointMonitor,AlertmanagerConfig,ScaledObject,TriggerAuthentication,PrometheusRule,Team,Project,ProjectKey"
+            kustomize build $env | kubectl apply -f - --dry-run=server
           done
-        name: kubeval
