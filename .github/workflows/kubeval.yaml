@@ -10,7 +10,7 @@ on:
 jobs:
   kubeval:
     name: kubeval
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - run: |
           echo "SH8=$(echo ${{ env.SH8 }})" >> $GITHUB_ENV
