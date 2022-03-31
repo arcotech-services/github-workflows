@@ -22,6 +22,13 @@ jobs:
         uses: imranismail/setup-kustomize@v1
         with:
           kustomize-version: "3.8.8"
+      
+      - uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+          context: stg01-us-east-1.k8s.local
+        id: set-staging-context
 
       - name: Validate Manifests
         run: |
@@ -29,5 +36,5 @@ jobs:
           export NOCOLOR='\033[0m'
           for env in `find ${{ inputs.MANIFESTS_PATH }}/ -type d|awk 'NR > 1'`; do
             echo -e "\n\n${GREEN}Validating $env manifests${NOCOLOR}"
-            kustomize build $env | kubectl apply -f - --dry-run=client
+            kustomize build $env | kubectl apply -f - --dry-run=server
           done
