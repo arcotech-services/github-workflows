@@ -29,5 +29,5 @@ jobs:
           export NOCOLOR='\033[0m'
           for env in `find ${{ inputs.MANIFESTS_PATH }}/ -type d|awk 'NR > 1'`; do
             echo -e "\n\n${GREEN}Validating $env manifests${NOCOLOR}"
-            kustomize build $env | kubectl apply -f - --dry-run=server
+            kustomize build $env | kubectl apply -f - --dry-run=client
           done
