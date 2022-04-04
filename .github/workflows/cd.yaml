@@ -29,7 +29,7 @@ on:
 
 
 env:
-  APP_NAME: ${{ input.APP_NAME}}
+  APP_NAME: ${{ inputs.APP_NAME}}
   ALERTS_CHANNEL: "${{ secrets.SAE_ALERTS_CHANNEL }}"
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
@@ -89,7 +89,7 @@ jobs:
     environment: production
     steps:
       - name: Get app name
-        if: ${{ input.APP_NAME == 'false'}}
+        if: ${{ inputs.APP_NAME == 'false'}}
         run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
 
       - name: Login to ArgoCD
