@@ -44,6 +44,7 @@ jobs:
         run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
 
   sync-stg:
+    needs: set-app-name
     if: ${{ inputs.ENABLE_STG == 'true' }}
     runs-on: self-hosted
     environment: staging
