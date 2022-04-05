@@ -1,4 +1,5 @@
 ---
+# directory ".k8s/overlays/<stg/prd>" must to be already created before adding this workflow
 # yamllint disable rule:line-length
 name: CD
 
