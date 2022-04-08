@@ -1,0 +1,66 @@
+---
+# yamllint disable rule:line-length
+name: CD
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_call:
+    inputs:
+      APP_NAME:
+        required: false
+        type: string
+    secrets:
+      ALERTS_CHANNEL:
+        required: true
+      ARGOCD_URL:
+        required: true
+      ARGOCD_USER:
+        required: true
+      ARGOCD_PASS:
+        required: true
+
+
+env:
+  ALERTS_CHANNEL: "${{ secrets.ALERTS_CHANNEL }}"
+  ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
+  ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
+  ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
+
+
+jobs:
+  sync-prd:
+    runs-on: self-hosted
+    environment: production
+    steps:
+
+      - run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Login to ArgoCD
+        uses: clowdhaus/argo-cd-action/@main
+        with:
+          command: login "${{ secrets.ARGOCD_URL }}"
+          options: --grpc-web --username "${{ secrets.ARGOCD_USER }}" --password "${{ secrets.ARGOCD_PASS }}"
+
+      - name: Get Short SHA
+        id: sha
+        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+
+      - name: ArgoCD Overwrite Image Tag
+        uses: clowdhaus/argo-cd-action/@main
+        with:
+          command: app set "${{ env.APP_NAME }}-prd"
+          options: --kustomize-image "ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}"
+
+      - name: Sync Production
+        uses: clowdhaus/argo-cd-action/@main
+        with:
+          command: app sync "${{ env.APP_NAME }}-prd"
+
+      - name: Deploy ${{ env.APP_NAME }} prd version ${{ steps.sha.outputs.sha8 }} by user ${{ github.actor }}
+        if: always()
+        uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: "${{ env.ALERTS_CHANNEL }}"
