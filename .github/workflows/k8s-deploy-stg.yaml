@@ -9,6 +9,12 @@ on:
       APP_NAME:
         required: false
         type: string
+      ENABLE_SENTRY_RELEASE:
+        required: false
+        type: string
+      SENTRY_PROJECT:
+        required: false
+        type: string
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -18,8 +24,9 @@ on:
         required: true
       ARGOCD_PASS:
         required: true
-
-
+      SENTRY_AUTH_TOKEN:
+        required: false
+      
 env:
   ALERTS_CHANNEL: "${{ secrets.ALERTS_CHANNEL }}"
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
@@ -56,6 +63,24 @@ jobs:
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: app sync "${{ env.APP_NAME }}-stg"
+
+      - name: sentry-release
+        run: |
+          if [ inputs.ENABLE_SENTRY_RELEASE == "true" ]; then
+            # Install Sentry CLI
+            curl -sL https://sentry.io/get-cli/ | bash
+            
+            # Create new Sentry release
+            export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+            sentry-cli releases new -p inputs.SENTRY_PROJECT $SENTRY_RELEASE
+            sentry-cli releases set-commits --auto $SENTRY_RELEASE || true
+            sentry-cli releases finalize $SENTRY_RELEASE
+            
+            # Create new deploy for this Sentry release
+            sentry-cli releases deploys $SENTRY_RELEASE new -e stg
+          else
+            echo "Sentry Release is disabled."
+          fi
 
       - name: Deploy ${{ env.APP_NAME }} stg version ${{ steps.sha.outputs.sha8 }} by user ${{ github.actor }}
         if: always()
