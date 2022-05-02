@@ -18,6 +18,7 @@ on:
       IMAGE_NAME:
         required: false
         type: string
+        default: 'ghcr.io/${{ github.repository }}'
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -35,7 +36,7 @@ env:
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
   ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
-  IMAGE: "${{ inputs.IMAGE_NAME == '' && 'ghcr.io/${{ github.repository }}' || inputs.IMAGE_NAME }}"
+  IMAGE: "${{ inputs.IMAGE_NAME == 'ghcr.io/${{ github.repository }}' && 'ghcr.io/${{ github.repository }}' || inputs.IMAGE_NAME }}"
 
 
 jobs:

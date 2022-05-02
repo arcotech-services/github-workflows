@@ -7,6 +7,10 @@ on:
         required: true
         type: string
         default: ghcr.io
+      IMAGE_NAME:
+        required: false
+        type: string
+        default: 'ghcr.io/${{ github.repository }}'
     secrets:
       GH_REGISTRY_USERNAME:
         required: true
@@ -14,6 +18,7 @@ on:
         required: true
 env:
   REGISTRY: ${{ inputs.REGISTRY }}
+  IMAGE_NAME: "${{ inputs.IMAGE_NAME == 'ghcr.io/${{ github.repository }}' && 'ghcr.io/${{ github.repository }}' || inputs.IMAGE_NAME }}"
   GH_REGISTRY_USERNAME: ${{ secrets.GH_REGISTRY_USERNAME }}
   GH_REGISTRY_PASSWORD: ${{ secrets.GH_REGISTRY_PASSWORD }}
 
@@ -21,6 +26,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Get app image
+        run: echo "${{ inputs.IMAGE_NAME }}"
       - name: Get Short SHA
         id: sha
         run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
