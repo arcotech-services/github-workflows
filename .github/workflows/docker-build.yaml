@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Get app image
         run: echo "${{ inputs.IMAGE_NAME }}"
+      - name: Get app build path
+        run: echo "${{ inputs.BUILD_PATH }}"
       - name: Get Short SHA
         id: sha
         run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
