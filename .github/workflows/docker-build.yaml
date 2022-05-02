@@ -11,6 +11,10 @@ on:
         required: false
         type: string
         default: 'ghcr.io/${{ github.repository }}'
+      BUILD_PATH:
+        required: false
+        type: string
+        default: '.'
     secrets:
       GH_REGISTRY_USERNAME:
         required: true
@@ -18,7 +22,6 @@ on:
         required: true
 env:
   REGISTRY: ${{ inputs.REGISTRY }}
-  IMAGE_NAME: "${{ inputs.IMAGE_NAME == 'ghcr.io/${{ github.repository }}' && 'ghcr.io/${{ github.repository }}' || inputs.IMAGE_NAME }}"
   GH_REGISTRY_USERNAME: ${{ secrets.GH_REGISTRY_USERNAME }}
   GH_REGISTRY_PASSWORD: ${{ secrets.GH_REGISTRY_PASSWORD }}
 
@@ -42,8 +45,8 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: .
+          context: ${{ inputs.BUILD_PATH }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}
-            ghcr.io/${{ github.repository }}:latest
+            ${{ inputs.IMAGE_NAME }}:${{ steps.sha.outputs.sha8 }}
+            ${{ inputs.IMAGE_NAME }}:latest
