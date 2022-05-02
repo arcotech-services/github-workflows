@@ -15,6 +15,9 @@ on:
       SENTRY_PROJECT:
         required: false
         type: string
+      IMAGE_NAME:
+        required: false
+        type: string
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -32,6 +35,7 @@ env:
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
   ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
+  IMAGE: "${{ inputs.IMAGE_NAME == '' && 'ghcr.io/${{ github.repository }}' || inputs.IMAGE_NAME }}"
 
 
 jobs:
@@ -39,6 +43,8 @@ jobs:
     runs-on: self-hosted
     environment: staging
     steps:
+
+      - run: echo "inputs.IMAGE_NAME"
 
       - run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
         shell: bash
