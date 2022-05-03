@@ -19,6 +19,10 @@ on:
         required: false
         type: string
         default: 'ghcr.io/${{ github.repository }}'
+      BUILD_PATH:
+        required: false
+        type: string
+        default: '.'
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -36,7 +40,6 @@ env:
   ARGOCD_URL: "${{ secrets.ARGOCD_URL }}"
   ARGOCD_USER: "${{ secrets.ARGOCD_USER }}"
   ARGOCD_PASS: "${{ secrets.ARGOCD_PASS }}"
-  IMAGE: "${{ inputs.IMAGE_NAME == 'ghcr.io/${{ github.repository }}' && 'ghcr.io/${{ github.repository }}' || inputs.IMAGE_NAME }}"
 
 
 jobs:
@@ -44,8 +47,10 @@ jobs:
     runs-on: self-hosted
     environment: staging
     steps:
-
-      - run: echo "inputs.IMAGE_NAME"
+      - name: Get app image
+        run: echo "${{ inputs.IMAGE_NAME }}"
+      - name: Get app build path
+        run: echo "${{ inputs.BUILD_PATH }}"
 
       - run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
         shell: bash
@@ -64,7 +69,7 @@ jobs:
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: app set "${{ env.APP_NAME }}-stg"
-          options: --kustomize-image "ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}"
+          options: --kustomize-image "${{ inputs.IMAGE_NAME }}:${{ steps.sha.outputs.sha8 }}"
 
       - name: Sync Staging
         uses: clowdhaus/argo-cd-action/@main
