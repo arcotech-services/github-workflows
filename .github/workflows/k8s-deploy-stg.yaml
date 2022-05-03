@@ -19,10 +19,6 @@ on:
         required: false
         type: string
         default: 'ghcr.io/${{ github.repository }}'
-      BUILD_PATH:
-        required: false
-        type: string
-        default: '.'
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -49,8 +45,6 @@ jobs:
     steps:
       - name: Get app image
         run: echo "${{ inputs.IMAGE_NAME }}"
-      - name: Get app build path
-        run: echo "${{ inputs.BUILD_PATH }}"
 
       - run: echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
         shell: bash
