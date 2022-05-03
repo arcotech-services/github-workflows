@@ -15,6 +15,10 @@ on:
       SENTRY_PROJECT:
         required: false
         type: string
+      IMAGE_NAME:
+        required: false
+        type: string
+        default: 'ghcr.io/${{ github.repository }}'
     secrets:
       ALERTS_CHANNEL:
         required: true
@@ -57,7 +61,7 @@ jobs:
         uses: clowdhaus/argo-cd-action/@main
         with:
           command: app set "${{ env.APP_NAME }}-prd"
-          options: --kustomize-image "ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}"
+          options: --kustomize-image "${{ inputs.IMAGE_NAME }}:${{ steps.sha.outputs.sha8 }}"
 
       - name: Sync Production
         uses: clowdhaus/argo-cd-action/@main

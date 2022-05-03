@@ -7,6 +7,14 @@ on:
         required: true
         type: string
         default: ghcr.io
+      IMAGE_NAME:
+        required: false
+        type: string
+        default: 'ghcr.io/${{ github.repository }}'
+      BUILD_PATH:
+        required: false
+        type: string
+        default: '.'
     secrets:
       GH_REGISTRY_USERNAME:
         required: true
@@ -21,6 +29,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Get app image
+        run: echo "${{ inputs.IMAGE_NAME }}"
+      - name: Get app build path
+        run: echo "${{ inputs.BUILD_PATH }}"
       - name: Get Short SHA
         id: sha
         run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
@@ -35,8 +47,8 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: .
+          context: ${{ inputs.BUILD_PATH }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ steps.sha.outputs.sha8 }}
-            ghcr.io/${{ github.repository }}:latest
+            ${{ inputs.IMAGE_NAME }}:${{ steps.sha.outputs.sha8 }}
+            ${{ inputs.IMAGE_NAME }}:latest
