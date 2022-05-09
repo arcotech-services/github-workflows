@@ -1,0 +1,58 @@
+---
+name: docker-build
+on:
+  workflow_call:
+    inputs:
+      REGISTRY:
+        required: true
+        type: string
+        default: ghcr.io
+      IMAGE_NAME:
+        required: false
+        type: string
+        default: 'ghcr.io/${{ github.repository }}'
+      BUILD_PATH:
+        required: false
+        type: string
+        default: '.'
+      BUILD_ARGS:
+        required: true
+        type: string
+    secrets:
+      GH_REGISTRY_USERNAME:
+        required: true
+      GH_REGISTRY_PASSWORD:
+        required: true
+env:
+  REGISTRY: ${{ inputs.REGISTRY }}
+  GH_REGISTRY_USERNAME: ${{ secrets.GH_REGISTRY_USERNAME }}
+  GH_REGISTRY_PASSWORD: ${{ secrets.GH_REGISTRY_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get app image
+        run: echo "${{ inputs.IMAGE_NAME }}"
+      - name: Get app build path
+        run: echo "${{ inputs.BUILD_PATH }}"
+      - name: Get Short SHA
+        id: sha
+        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ env.GH_REGISTRY_USERNAME }}
+          password: ${{ env.GH_REGISTRY_PASSWORD }}
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ inputs.BUILD_PATH }}
+          push: true
+          build-args: ${{ inputs.BUILD_ARGS }}
+          tags: |
+            ${{ inputs.IMAGE_NAME }}:${{ steps.sha.outputs.sha8 }}
+            ${{ inputs.IMAGE_NAME }}:latest
