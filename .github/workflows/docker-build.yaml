@@ -33,14 +33,14 @@ jobs:
         run: echo "${{ inputs.IMAGE_NAME }}"
       - name: Get app build path
         run: echo "${{ inputs.BUILD_PATH }}"
-      - name: Inject NewRelic license key
-        run: |
-          sed -i "s/\$NEWRELIC_KEY/${{ secrets.NEWRELIC_KEY }}/g" ${{ inputs.BUILD_PATH }}/Dockerfile
       - name: Get Short SHA
         id: sha
         run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Inject NewRelic license key
+        run: |
+          sed -i "s/\$NEWRELIC_KEY/${{ secrets.NEWRELIC_KEY }}/g" ${{ inputs.BUILD_PATH }}/Dockerfile
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
