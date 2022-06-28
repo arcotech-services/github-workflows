@@ -57,3 +57,5 @@ jobs:
           tags: |
             ${{ inputs.IMAGE_NAME }}:${{ steps.sha.outputs.sha8 }}
             ${{ inputs.IMAGE_NAME }}:latest
+          build-args: |
+            APP_VERSION=${{ steps.sha.outputs.sha8 }}
